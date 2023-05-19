@@ -2,7 +2,6 @@ from fastapi import APIRouter, status, Depends, HTTPException
 from schemas import owner, pet
 from sqlalchemy.orm import Session
 from database import db, owner_service
-from models import models
 from typing import List
 
 router = APIRouter()
@@ -35,7 +34,7 @@ def get_owner(owner_id: str, db: Session = Depends(db.get_db)):
 
 @router.get("/owner", status_code=200, response_model=List[owner.ShowOwnerSchema])
 def get_all_owners(db: Session = Depends(db.get_db)):
-    owner_objs = db.query(models.Owner).all()
+    owner_objs = owner_service.get_all_owners(db)
     if not owner_objs:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -62,8 +61,8 @@ def edit_owner(
 
 @router.delete("/owner/{id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_owner(owner_id: str, db: Session = Depends(db.get_db)):
-    deleted_owner = owner_service.delete_owner(db, owner_id)
-    if not deleted_owner:
+    owner_obj = owner_service.delete_owner(db, owner_id)
+    if not owner_obj:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Owner with owner id: {owner_id} not found !!!",

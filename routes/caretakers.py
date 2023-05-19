@@ -1,8 +1,7 @@
 from fastapi import APIRouter, status, Depends, HTTPException
 from schemas import caretaker
 from sqlalchemy.orm import Session
-from database import db
-from models import models
+from database import db, caretaker_service
 from typing import List
 
 router = APIRouter()
@@ -12,30 +11,23 @@ router = APIRouter()
 def create_caretaker(
     request: caretaker.CaretakerSchema, db: Session = Depends(db.get_db)
 ):
-    new_caretaker = models.Caretaker(
-        name=request.name,
-        address=request.address,
-        email=request.email,
-        phone=request.phone,
-        lat=request.lat,
-        lon=request.lon,
+    new_caretaker = caretaker_service.create_caretaker(
+        db,
+        request.name,
+        request.address,
+        request.email,
+        request.phone,
+        request.lat,
+        request.lon,
     )
-    db.add(new_caretaker)
-    db.commit()
-    db.refresh(new_caretaker)
-    return {"data": f"Caretaker created with name {request.name}"}
+    return {"data": f"Caretaker created with name {new_caretaker.name}"}
 
 
 @router.get(
     "/caretaker/{id}", status_code=200, response_model=caretaker.ShowCaretakerSchema
 )
-def get_caretaker(
-    caretaker_id: str,
-    db: Session = Depends(db.get_db),
-):
-    caretaker_obj = (
-        db.query(models.Caretaker).filter(models.Caretaker.id == caretaker_id).first()
-    )
+def get_caretaker(caretaker_id: str, db: Session = Depends(db.get_db)):
+    caretaker_obj = caretaker_service.get_caretaker(db, caretaker_id)
     if not caretaker_obj:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -47,10 +39,8 @@ def get_caretaker(
 @router.get(
     "/caretaker", status_code=200, response_model=List[caretaker.ShowCaretakerSchema]
 )
-def get_all_caretakers(
-    db: Session = Depends(db.get_db),
-):
-    caretaker_objs = db.query(models.Caretaker).all()
+def get_all_caretakers(db: Session = Depends(db.get_db)):
+    caretaker_objs = caretaker_service.get_all_caretakers(db)
     if not caretaker_objs:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -65,26 +55,25 @@ def edit_caretaker(
     request: caretaker.UpdateCaretakerSchema,
     db: Session = Depends(db.get_db),
 ):
-    caretaker_obj = (
-        db.query(models.Caretaker).filter(models.Caretaker.id == caretaker_id).first()
-    )
+    caretaker_obj = caretaker_service.get_caretaker(db, caretaker_id)
     if not caretaker_obj:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Caretaker with caretaker id: {caretaker_id} not found !!!",
         )
-    caretaker_obj.address = request.address
-    caretaker_obj.lat = request.lat
-    caretaker_obj.lon = request.lon
-    db.commit()
-    db.refresh(caretaker_obj)
+    caretaker_obj = caretaker_service.edit_caretaker(
+        db, caretaker_obj, request.address, request.lat, request.lon
+    )
     return caretaker_obj
 
 
 @router.delete("/caretaker/{id}", status_code=status.HTTP_204_NO_CONTENT)
-def remove_caretaker(caretaker_id: str, db: Session = Depends(db.get_db)):
-    db.query(models.Caretaker).filter(models.Caretaker.id == caretaker_id).delete(
-        synchronize_session=False
-    )
-    db.commit()
-    return "Done !!!"
+def delete_caretaker(caretaker_id: str, db: Session = Depends(db.get_db)):
+    caretaker_obj = caretaker_service.delete_caretaker(db, caretaker_id)
+    if not caretaker_obj:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Caretaker with caretaker id: {caretaker_id} not found !!!",
+        )
+
+    return None
