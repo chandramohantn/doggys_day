@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-from config.database import engine
+from database.db import engine
 from models import models
 from routes import caretakers, owners
 

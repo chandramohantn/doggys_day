@@ -1,7 +1,7 @@
 from fastapi import APIRouter, status, Depends, HTTPException
 from schemas import caretaker
 from sqlalchemy.orm import Session
-from config import database
+from database import db
 from models import models
 from typing import List
 
@@ -10,7 +10,7 @@ router = APIRouter()
 
 @router.post("/create", status_code=status.HTTP_201_CREATED)
 def create_caretaker(
-    request: caretaker.CaretakerSchema, db: Session = Depends(database.get_db)
+    request: caretaker.CaretakerSchema, db: Session = Depends(db.get_db)
 ):
     new_caretaker = models.Caretaker(
         name=request.name,
@@ -31,7 +31,7 @@ def create_caretaker(
 )
 def get_caretaker(
     caretaker_id: str,
-    db: Session = Depends(database.get_db),
+    db: Session = Depends(db.get_db),
 ):
     caretaker_obj = (
         db.query(models.Caretaker).filter(models.Caretaker.id == caretaker_id).first()
@@ -48,7 +48,7 @@ def get_caretaker(
     "/caretaker", status_code=200, response_model=List[caretaker.ShowCaretakerSchema]
 )
 def get_all_caretakers(
-    db: Session = Depends(database.get_db),
+    db: Session = Depends(db.get_db),
 ):
     caretaker_objs = db.query(models.Caretaker).all()
     if not caretaker_objs:
@@ -63,7 +63,7 @@ def get_all_caretakers(
 def edit_caretaker(
     caretaker_id: str,
     request: caretaker.UpdateCaretakerSchema,
-    db: Session = Depends(database.get_db),
+    db: Session = Depends(db.get_db),
 ):
     caretaker_obj = (
         db.query(models.Caretaker).filter(models.Caretaker.id == caretaker_id).first()
@@ -82,7 +82,7 @@ def edit_caretaker(
 
 
 @router.delete("/caretaker/{id}", status_code=status.HTTP_204_NO_CONTENT)
-def remove_caretaker(caretaker_id: str, db: Session = Depends(database.get_db)):
+def remove_caretaker(caretaker_id: str, db: Session = Depends(db.get_db)):
     db.query(models.Caretaker).filter(models.Caretaker.id == caretaker_id).delete(
         synchronize_session=False
     )
