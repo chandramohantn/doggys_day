@@ -56,19 +56,19 @@ pets
   "age": 10,
   "breed": "giant",
   "gender": "male",
-  "owner_id": ""
+  "owner_id": "857de7cf-c5e7-4538-b7b1-9442880df517"
 }
 {
   "name": "rift",
   "age": 7,
   "breed": "mini_giant",
   "gender": "male",
-  "owner_id": ""
+  "owner_id": "9ddbb481-249f-4969-a2eb-a0ca6426f297"
 }
 {
   "name": "dragon",
   "age": 7,
   "breed": "mini_giant",
   "gender": "male",
-  "owner_id": ""
+  "owner_id": "857de7cf-c5e7-4538-b7b1-9442880df517"
 }

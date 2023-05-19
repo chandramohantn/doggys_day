@@ -72,3 +72,9 @@ def get_pet_info(db: Session, pet_id: str):
 def get_owner_pets(db: Session, owner_id: str):
     pets_obj = db.query(models.Pet).filter(models.Pet.owner_id == owner_id).all()
     return pets_obj
+
+
+def get_pet_owner_id(db: Session, pet_id: str):
+    pet_obj = db.query(models.Pet).filter(models.Pet.id == pet_id).first()
+    owner_id = pet_obj.owner_id
+    return owner_id

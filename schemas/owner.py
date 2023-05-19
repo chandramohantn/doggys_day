@@ -24,6 +24,16 @@ class ShowOwnerSchema(BaseModel):
         orm_mode = True
 
 
+class ShowPetOwnerSchema(BaseModel):
+    name: str
+    address: str
+    lat: int
+    lon: int
+
+    class Config:
+        orm_mode = True
+
+
 class UpdateOwnerSchema(BaseModel):
     address: str
     lat: int

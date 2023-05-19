@@ -112,3 +112,20 @@ def get_pet_info(
             detail=f"Pet with pet id: {pet_id} not found !!!",
         )
     return pet_obj
+
+
+@router.get("/pet_owner/{id}", status_code=200, response_model=owner.ShowPetOwnerSchema)
+def get_pet_owner(
+    pet_id: str,
+    db: Session = Depends(db.get_db),
+):
+    pet_obj = owner_service.get_pet_info(db, pet_id)
+    if not pet_obj:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Pet with pet id: {pet_id} not found !!!",
+        )
+
+    owner_id = owner_service.get_pet_owner_id(db, pet_id)
+    owner_obj = owner_service.get_owner(db, owner_id)
+    return owner_obj
