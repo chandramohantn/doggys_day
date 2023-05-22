@@ -1,8 +1,10 @@
 from fastapi import APIRouter, status, Depends, HTTPException
-from schemas import owner, pet
+from schemas import owner, pet, booking, caretaker
 from sqlalchemy.orm import Session
-from database import db, owner_service
+from database import db, owner_service, caretaker_service
 from typing import List
+from utils.hashing import Hash
+from utils import oauth2
 
 router = APIRouter()
 
@@ -14,6 +16,7 @@ def create_owner(request: owner.OwnerSchema, db: Session = Depends(db.get_db)):
         request.name,
         request.address,
         request.email,
+        Hash.get_password_hash(request.password),
         request.phone,
         request.lat,
         request.lon,
@@ -33,7 +36,10 @@ def get_owner(owner_id: str, db: Session = Depends(db.get_db)):
 
 
 @router.get("/owner", status_code=200, response_model=List[owner.ShowOwnerSchema])
-def get_all_owners(db: Session = Depends(db.get_db)):
+def get_all_owners(
+    db: Session = Depends(db.get_db),
+    get_current_user=Depends(oauth2.get_current_owner),
+):
     owner_objs = owner_service.get_all_owners(db)
     if not owner_objs:
         raise HTTPException(
@@ -79,7 +85,7 @@ def add_pet(request: pet.PetSchema, db: Session = Depends(db.get_db)):
     return {"data": f"Pet {new_pet.name} created for owner ..."}
 
 
-@router.get("/owner_pets/{id}", status_code=200, response_model=pet.ShowPetSchema)
+@router.get("/owner_pets/{id}", status_code=200, response_model=List[pet.ShowPetSchema])
 def get_owner_pets(
     owner_id: str,
     db: Session = Depends(db.get_db),
@@ -129,3 +135,84 @@ def get_pet_owner(
     owner_id = owner_service.get_pet_owner_id(db, pet_id)
     owner_obj = owner_service.get_owner(db, owner_id)
     return owner_obj
+
+
+@router.post("/booking", status_code=status.HTTP_201_CREATED)
+def create_booking(request: booking.BookingSchema, db: Session = Depends(db.get_db)):
+    new_booking = owner_service.create_booking(
+        db,
+        request.caretaker_id,
+        request.owner_id,
+        request.date_of_booking,
+        request.instruction,
+    )
+    return {
+        "data": f"Booking created for owner {request.owner_id} with booking id: {new_booking.booking_id} ..."
+    }
+
+
+@router.get(
+    "/owner_booking/{id}", status_code=200, response_model=List[booking.BookingSchema]
+)
+def get_owner_bookings(owner_id: str, db: Session = Depends(db.get_db)):
+    owner_obj = owner_service.get_owner(db, owner_id)
+    if not owner_obj:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Owner with owner id {owner_id} not found ...",
+        )
+    booking_objs = owner_service.get_owner_bookings(db, owner_id)
+    if not booking_objs:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Owner with owner id {owner_id} has no bookings ...",
+        )
+    return booking_objs
+
+
+@router.get("/booking/{id}", status_code=200, response_model=booking.BookingSchema)
+def get_booking_info(booking_id: str, db: Session = Depends(db.get_db)):
+    booking_obj = owner_service.get_booking_info(db, booking_id)
+    if not booking_obj:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Booking id {booking_id} not found ...",
+        )
+    return booking_obj
+
+
+@router.post("/review", status_code=status.HTTP_201_CREATED)
+def create_review(request: booking.ReviewSchema, db: Session = Depends(db.get_db)):
+    new_review = owner_service.create_review(
+        db,
+        request.booking_id,
+        request.rating,
+        request.date_of_review,
+        request.comment,
+    )
+    return {
+        "data": f"Review created for booking with booking id: {new_review.booking_id} ..."
+    }
+
+
+@router.get(
+    "/recommend/{id}",
+    status_code=200,
+    response_model=List[caretaker.ShowCaretakerSchema],
+)
+def recommend_caretaker(owner_id: str, db: Session = Depends(db.get_db)):
+    owner_obj = owner_service.get_owner(db, owner_id)
+    if not owner_obj:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Owner with owner id: {owner_id} not found !!!",
+        )
+    caretaker_objs = caretaker_service.find_nearby_caretakers(
+        db, owner_obj.lat, owner_obj.lon
+    )
+    if not caretaker_objs:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"No caretakers nearby for Owner with owner id {owner_id} ...",
+        )
+    return caretaker_objs

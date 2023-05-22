@@ -1,6 +1,6 @@
 import uuid
 from database.db import Base
-from sqlalchemy import Column, String, Integer, DateTime, TEXT, ForeignKey, Table
+from sqlalchemy import Column, String, Integer, DateTime, TEXT, ForeignKey, Table, Float
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 
@@ -30,6 +30,7 @@ class Owner(Base):
     name = Column(String, nullable=False)
     address = Column(String, nullable=False)
     email = Column(String, unique=True, nullable=False)
+    password = Column(String, nullable=False)
     phone = Column(String, unique=True, nullable=False)
     lat = Column(Integer, nullable=False)
     lon = Column(Integer, nullable=False)
@@ -62,9 +63,11 @@ class Caretaker(Base):
     name = Column(String, nullable=False)
     address = Column(String, nullable=False)
     email = Column(String, unique=True, nullable=False)
+    password = Column(String, nullable=False)
     phone = Column(String, unique=True, nullable=False)
     lat = Column(Integer, nullable=False)
     lon = Column(Integer, nullable=False)
+    rating = Column(Float, default=0)
     booking_obj = relationship(
         "Booking", secondary=caretaker_booking, back_populates="caretaker_obj"
     )

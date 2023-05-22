@@ -5,6 +5,7 @@ class OwnerSchema(BaseModel):
     name: str
     address: str
     email: str
+    password: str
     phone: str
     lat: int
     lon: int

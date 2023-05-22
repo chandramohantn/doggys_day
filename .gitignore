@@ -1,3 +1,6 @@
 __pycache__
 .env
 .vscode
+data.py
+TODO.txt
+populate_database.py

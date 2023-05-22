@@ -4,9 +4,14 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-fastapi = {extras = ["all"], version = "*"}
+fastapi = "*"
+uvicorn = "*"
 sqlalchemy = "*"
 psycopg2 = "*"
+requests = "*"
+passlib = "*"
+bcrypt = "*"
+python-jose = "*"
 
 [dev-packages]
 

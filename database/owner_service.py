@@ -1,14 +1,23 @@
 from sqlalchemy.orm import Session
 from models import models
+from datetime import datetime
 
 
 def create_owner(
-    db: Session, name: str, address: str, email: str, phone: str, lat: int, lon: int
+    db: Session,
+    name: str,
+    address: str,
+    email: str,
+    password: str,
+    phone: str,
+    lat: int,
+    lon: int,
 ):
     new_owner = models.Owner(
         name=name,
         address=address,
         email=email,
+        password=password,
         phone=phone,
         lat=lat,
         lon=lon,
@@ -78,3 +87,51 @@ def get_pet_owner_id(db: Session, pet_id: str):
     pet_obj = db.query(models.Pet).filter(models.Pet.id == pet_id).first()
     owner_id = pet_obj.owner_id
     return owner_id
+
+
+def create_booking(
+    db: Session,
+    caretaker_id: str,
+    owner_id: str,
+    date_of_booking: datetime,
+    instruction: str,
+):
+    new_booking = models.Booking(
+        caretaker_id=caretaker_id,
+        owner_id=owner_id,
+        date_of_booking=date_of_booking,
+        instruction=instruction,
+    )
+    db.add(new_booking)
+    db.commit()
+    db.refresh(new_booking)
+    return new_booking
+
+
+def get_owner_bookings(db: Session, owner_id: str):
+    booking_objs = (
+        db.query(models.Booking).filter(models.Booking.owner_id == owner_id).all()
+    )
+    return booking_objs
+
+
+def get_booking_info(db: Session, booking_id: str):
+    booking_obj = (
+        db.query(models.Booking).filter(models.Booking.id == booking_id).first()
+    )
+    return booking_obj
+
+
+def create_review(
+    db: Session, booking_id: str, rating: int, date_of_review: datetime, comment: str
+):
+    new_review = models.Review(
+        booking_id=booking_id,
+        rating=rating,
+        date_of_review=date_of_review,
+        comment=comment,
+    )
+    db.add(new_review)
+    db.commit()
+    db.refresh(new_review)
+    return new_review
