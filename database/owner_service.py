@@ -28,8 +28,18 @@ def create_owner(
     return new_owner
 
 
-def get_owner(db: Session, owner_id: str):
+def get_owner_by_id(db: Session, owner_id: str):
     owner_obj = db.query(models.Owner).filter(models.Owner.id == owner_id).first()
+    return owner_obj
+
+
+def get_owner_by_email(db: Session, owner_email: str):
+    owner_obj = db.query(models.Owner).filter(models.Owner.email == owner_email).first()
+    return owner_obj
+
+
+def get_owner_by_phone(db: Session, owner_phone: str):
+    owner_obj = db.query(models.Owner).filter(models.Owner.phone == owner_phone).first()
     return owner_obj
 
 
@@ -38,10 +48,26 @@ def get_all_owners(db: Session):
     return owner_objs
 
 
-def edit_owner(db: Session, owner_obj: models.Owner, address: str, lat: int, lon: int):
+def edit_owner_address(
+    db: Session, owner_obj: models.Owner, address: str, lat: int, lon: int
+):
     owner_obj.address = address
     owner_obj.lat = lat
     owner_obj.lon = lon
+    db.commit()
+    db.refresh(owner_obj)
+    return owner_obj
+
+
+def edit_owner_email(db: Session, owner_obj: models.Owner, email: str):
+    owner_obj.email = email
+    db.commit()
+    db.refresh(owner_obj)
+    return owner_obj
+
+
+def edit_owner_phone(db: Session, owner_obj: models.Owner, phone: str):
+    owner_obj.phone = phone
     db.commit()
     db.refresh(owner_obj)
     return owner_obj

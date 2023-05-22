@@ -28,9 +28,27 @@ def create_caretaker(
     return new_caretaker
 
 
-def get_caretaker(db: Session, caretaker_id: str):
+def get_caretaker_by_id(db: Session, caretaker_id: str):
     caretaker_obj = (
         db.query(models.Caretaker).filter(models.Caretaker.id == caretaker_id).first()
+    )
+    return caretaker_obj
+
+
+def get_caretaker_by_email(db: Session, caretaker_email: str):
+    caretaker_obj = (
+        db.query(models.Caretaker)
+        .filter(models.Caretaker.id == caretaker_email)
+        .first()
+    )
+    return caretaker_obj
+
+
+def get_caretaker_by_phone(db: Session, caretaker_phone: str):
+    caretaker_obj = (
+        db.query(models.Caretaker)
+        .filter(models.Caretaker.id == caretaker_phone)
+        .first()
     )
     return caretaker_obj
 
@@ -40,12 +58,26 @@ def get_all_caretakers(db: Session):
     return caretaker_objs
 
 
-def edit_caretaker(
+def edit_caretaker_address(
     db: Session, caretaker_obj: models.Caretaker, address: str, lat: int, lon: int
 ):
     caretaker_obj.address = address
     caretaker_obj.lat = lat
     caretaker_obj.lon = lon
+    db.commit()
+    db.refresh(caretaker_obj)
+    return caretaker_obj
+
+
+def edit_caretaker_email(db: Session, caretaker_obj: models.Caretaker, email: str):
+    caretaker_obj.email = email
+    db.commit()
+    db.refresh(caretaker_obj)
+    return caretaker_obj
+
+
+def edit_caretaker_phone(db: Session, caretaker_obj: models.Caretaker, phone: str):
+    caretaker_obj.phone = phone
     db.commit()
     db.refresh(caretaker_obj)
     return caretaker_obj
