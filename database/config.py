@@ -12,8 +12,10 @@ class DBSettings(BaseSettings):
 
 
 class JWTSettings(BaseSettings):
-    # ACCESS_TOKEN_EXPIRE_MINUTES: int
-    SECRET_KEY: Any
+    ACCESS_TOKEN_EXPIRE_MINUTES: int
+    REFRESH_TOKEN_EXPIRE_MINUTES: int
+    JWT_SECRET_KEY: Any
+    JWT_REFRESH_SECRET_KEY: Any
     JWT_ALGORITHM: str
     # CLIENT_ORIGIN: str
 
