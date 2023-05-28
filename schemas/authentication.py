@@ -1,5 +1,7 @@
 from pydantic import BaseModel
 from uuid import UUID
+from database.config import jwtsettings
+from typing import List
 
 
 class LoginSchema(BaseModel):
@@ -15,10 +17,23 @@ class ShowLoginSchema(BaseModel):
         orm_mode = True
 
 
-class Token(BaseModel):
+class TokenSchema(BaseModel):
     access_token: str
     token_type: str
 
 
-class TokenData(BaseModel):
-    email: str | None = None
+class TokenPayloadSchema(BaseModel):
+    sub: str
+    exp: int
+
+
+class RefreshOwnerTokenSchema(BaseModel):
+    # id: UUID
+    token: str
+    owner_id: UUID
+
+
+class RefreshCaretakerTokenSchema(BaseModel):
+    # id: UUID
+    token: str
+    caretaker_id: UUID

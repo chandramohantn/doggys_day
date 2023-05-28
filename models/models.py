@@ -35,6 +35,7 @@ class Owner(Base):
     lat = Column(Integer, nullable=False)
     lon = Column(Integer, nullable=False)
     pet_obj = relationship("Pet", back_populates="owner_obj")
+    token_obj = relationship("OwnerToken", back_populates="owner_obj")
     booking_obj = relationship(
         "Booking", secondary=owner_booking, back_populates="owner_obj"
     )
@@ -68,6 +69,7 @@ class Caretaker(Base):
     lat = Column(Integer, nullable=False)
     lon = Column(Integer, nullable=False)
     rating = Column(Float, default=0)
+    token_obj = relationship("CaretakerToken", back_populates="caretaker_obj")
     booking_obj = relationship(
         "Booking", secondary=caretaker_booking, back_populates="caretaker_obj"
     )
@@ -103,3 +105,31 @@ class Review(Base):
     date_of_review = Column(DateTime, nullable=False)
     comment = Column(TEXT, nullable=True)
     booking_obj = relationship("Booking", back_populates="review_obj")
+
+
+class OwnerToken(Base):
+    __tablename__ = "owner_tokens"
+
+    id = Column(
+        UUID(as_uuid=True), primary_key=True, nullable=False, default=uuid.uuid4
+    )
+    access_token = Column(String, nullable=False)
+    access_token_expiry = Column(DateTime, nullable=False)
+    refresh_token = Column(String, nullable=False)
+    refresh_token_expiry = Column(DateTime, nullable=False)
+    owner_id = Column(UUID(as_uuid=True), ForeignKey("owners.id"))
+    owner_obj = relationship("Owner", back_populates="token_obj")
+
+
+class CaretakerToken(Base):
+    __tablename__ = "caretaker_tokens"
+
+    id = Column(
+        UUID(as_uuid=True), primary_key=True, nullable=False, default=uuid.uuid4
+    )
+    access_token = Column(String, nullable=False)
+    access_token_expiry = Column(DateTime, nullable=False)
+    refresh_token = Column(String, nullable=False)
+    refresh_token_expiry = Column(DateTime, nullable=False)
+    caretaker_id = Column(UUID(as_uuid=True), ForeignKey("caretakers.id"))
+    caretaker_obj = relationship("Caretaker", back_populates="token_obj")

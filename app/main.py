@@ -3,6 +3,7 @@ from database.db import engine
 from models import models
 from routes import authentication, caretakers, owners
 
+
 app = FastAPI()
 
 models.Base.metadata.create_all(engine)

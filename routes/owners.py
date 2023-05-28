@@ -3,8 +3,7 @@ from schemas import owner, pet, booking, caretaker
 from sqlalchemy.orm import Session
 from database import db, owner_service, caretaker_service
 from typing import List
-from utils.hashing import Hash
-from utils import oauth2
+from utils import oauth2, hashing
 
 router = APIRouter()
 
@@ -16,7 +15,7 @@ def create_owner(request: owner.OwnerSchema, db: Session = Depends(db.get_db)):
         request.name,
         request.address,
         request.email,
-        Hash.get_password_hash(request.password),
+        hashing.get_hashed_password(request.password),
         request.phone,
         request.lat,
         request.lon,
@@ -26,7 +25,7 @@ def create_owner(request: owner.OwnerSchema, db: Session = Depends(db.get_db)):
 
 @router.get("/owner/{id}", status_code=200, response_model=owner.ShowOwnerSchema)
 def get_owner(owner_id: str, db: Session = Depends(db.get_db)):
-    owner_obj = owner_service.get_owner(db, owner_id)
+    owner_obj = owner_service.get_owner_by_id(db, owner_id)
     if not owner_obj:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -53,7 +52,7 @@ def get_all_owners(
 def edit_owner(
     owner_id: str, request: owner.UpdateOwnerSchema, db: Session = Depends(db.get_db)
 ):
-    owner_obj = owner_service.get_owner(db, owner_id)
+    owner_obj = owner_service.get_owner_by_id(db, owner_id)
     if not owner_obj:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,

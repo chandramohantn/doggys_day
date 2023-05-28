@@ -1,10 +1,10 @@
+from sqlalchemy.orm import Session
 from fastapi import APIRouter, status, Depends, HTTPException
 from fastapi.security import OAuth2PasswordRequestForm
 from schemas import authentication, owner, caretaker
-from sqlalchemy.orm import Session
 from database import db, authentication_service, owner_service, caretaker_service
-from utils.hashing import Hash
-from utils import token
+from utils import token, hashing
+
 
 router = APIRouter()
 
@@ -30,7 +30,7 @@ def owner_signup(request: owner.OwnerSchema, db: Session = Depends(db.get_db)):
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Phone number already exists !!!",
         )
-    hashed_password = Hash.get_password_hash(request.password)
+    hashed_password = hashing.get_hashed_password(request.password)
     new_owner = owner_service.create_owner(
         db,
         request.name,
@@ -44,25 +44,74 @@ def owner_signup(request: owner.OwnerSchema, db: Session = Depends(db.get_db)):
     return new_owner
 
 
-@router.post("/owner_login", summary="Login owner", response_model=authentication.Token)
+@router.post(
+    "/owner_login", summary="Login owner", response_model=authentication.TokenSchema
+)
 def owner_login(
-    request: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(db.get_db)
+    request: OAuth2PasswordRequestForm = Depends(),
+    db: Session = Depends(db.get_db),
 ):
-    owner_obj = authentication_service.get_owner(db, request.username)
+    owner_obj = owner_service.get_owner_by_email(db, request.username)
     if not owner_obj:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Invalid credentials !!!",
         )
 
-    if not Hash.verify_password(request.password, owner_obj.password):
+    if not hashing.verify_password(request.password, owner_obj.password):
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Invalid credentials !!!",
         )
 
-    access_token = token.create_access_token(data={"sub": owner_obj.email})
-    return {"access_token": access_token, "token_type": "bearer"}
+    owner_email, owner_id = owner_obj.email, owner_obj.id
+    owner_token_obj = authentication_service.get_owner_tokens(db, owner_id)
+    if owner_token_obj:
+        if not token.token_expired(owner_token_obj.refresh_token_expiry):
+            if token.token_expired(owner_token_obj.access_token_expiry):
+                access_token_obj = token.create_access_token(owner_email)
+                token_obj = authentication_service.edit_owner_access_token(
+                    db,
+                    owner_token_obj,
+                    access_token_obj["access_token"],
+                    access_token_obj["access_token_expiry"],
+                )
+                return {
+                    "access_token": access_token_obj["access_token"],
+                    "token_type": "bearer",
+                }
+
+            return {
+                "access_token": owner_token_obj.access_token,
+                "token_type": "bearer",
+            }
+
+        access_token_obj = token.create_access_token(owner_email)
+        refresh_token_obj = token.create_refresh_token(owner_email)
+        token_obj = authentication_service.edit_owner_all_tokens(
+            db,
+            owner_token_obj,
+            access_token_obj["access_token"],
+            access_token_obj["access_token_expiry"],
+            refresh_token_obj["refresh_token"],
+            refresh_token_obj["refresh_token_expiry"],
+        )
+        return {
+            "access_token": access_token_obj["access_token"],
+            "token_type": "bearer",
+        }
+
+    access_token_obj = token.create_access_token(owner_email)
+    refresh_token_obj = token.create_refresh_token(owner_email)
+    token_obj = authentication_service.store_owner_tokens(
+        db,
+        owner_id,
+        access_token_obj["access_token"],
+        access_token_obj["access_token_expiry"],
+        refresh_token_obj["refresh_token"],
+        refresh_token_obj["refresh_token_expiry"],
+    )
+    return {"access_token": access_token_obj["access_token"], "token_type": "bearer"}
 
 
 @router.post(
@@ -88,7 +137,7 @@ def caretaker_signup(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Phone number already exists !!!",
         )
-    hashed_password = Hash.get_password_hash(request.password)
+    hashed_password = hashing.get_hashed_password(request.password)
     new_caretaker = caretaker_service.create_caretaker(
         db,
         request.name,
@@ -103,22 +152,77 @@ def caretaker_signup(
 
 
 @router.post(
-    "/caretaker_login", summary="Login careatker", response_model=authentication.Token
+    "/caretaker_login",
+    summary="Login careatker",
+    response_model=authentication.TokenSchema,
 )
 def caretaker_login(
-    request: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(db.get_db)
+    request: OAuth2PasswordRequestForm = Depends(),
+    db: Session = Depends(db.get_db),
 ):
-    caretaker_obj = authentication_service.get_caretaker(db, request.username)
+    caretaker_obj = caretaker_service.get_caretaker_by_email(db, request.username)
     if not caretaker_obj:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Invalid credentials !!!",
         )
-    if not Hash.verify_password(request.password, caretaker_obj.password):
+    if not hashing.verify_password(request.password, caretaker_obj.password):
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Invalid credentials !!!",
         )
 
-    access_token = token.create_access_token(data={"sub": caretaker_obj.email})
-    return {"access_token": access_token, "token_type": "bearer"}
+    caretaker_email, caretaker_id = caretaker_obj.email, caretaker_obj.id
+    caretaker_token_obj = authentication_service.get_caretaker_tokens(db, caretaker_id)
+    if caretaker_token_obj:
+        if not token.token_expired(caretaker_token_obj.refresh_token_expiry):
+            if token.token_expired(caretaker_token_obj.access_token_expiry):
+                access_token_obj = token.create_access_token(caretaker_email)
+                token_obj = authentication_service.edit_caretaker_access_token(
+                    db,
+                    caretaker_token_obj,
+                    access_token_obj["access_token"],
+                    access_token_obj["access_token_expiry"],
+                )
+                return {
+                    "access_token": access_token_obj["access_token"],
+                    "token_type": "bearer",
+                }
+
+            return {
+                "access_token": caretaker_token_obj.access_token,
+                "token_type": "bearer",
+            }
+
+        access_token_obj = token.create_access_token(caretaker_email)
+        refresh_token_obj = token.create_refresh_token(caretaker_email)
+        token_obj = authentication_service.edit_caretaker_all_tokens(
+            db,
+            caretaker_token_obj,
+            access_token_obj["access_token"],
+            access_token_obj["access_token_expiry"],
+            refresh_token_obj["refresh_token"],
+            refresh_token_obj["refresh_token_expiry"],
+        )
+        return {
+            "access_token": access_token_obj["access_token"],
+            "token_type": "bearer",
+        }
+
+    access_token_obj = token.create_access_token(caretaker_email)
+    refresh_token_obj = token.create_refresh_token(caretaker_email)
+    token_obj = authentication_service.store_caretaker_tokens(
+        db,
+        caretaker_id,
+        access_token_obj["access_token"],
+        access_token_obj["access_token_expiry"],
+        refresh_token_obj["refresh_token"],
+        refresh_token_obj["refresh_token_expiry"],
+    )
+    return {"access_token": access_token_obj["access_token"], "token_type": "bearer"}
+
+
+# @router.get("/protected")
+# def protected_route(Authorize: AuthJWT = Depends(token.validate_access_token)):
+#     current_user = Authorize.get_jwt_identity()
+#     return {"message": f"Hello, {current_user}"}

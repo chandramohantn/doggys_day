@@ -1,50 +1,33 @@
-from datetime import datetime, timedelta
-from jose import JWTError, jwt
+from typing import Union, Any
+from jose import jwt
+from datetime import timedelta, datetime
 from database.config import jwtsettings
-from schemas import authentication
 
 
-def create_access_token(data: dict, expires_delta: int = None):
-    if expires_delta is not None:
-        expires_delta = datetime.utcnow() + expires_delta
-    else:
-        expires_delta = datetime.utcnow() + timedelta(
-            minutes=jwtsettings.ACCESS_TOKEN_EXPIRE_MINUTES
-        )
-
-    to_encode = data.copy()
-    to_encode.update({"exp": expires_delta})
-    encoded_jwt = jwt.encode(
-        to_encode, jwtsettings.JWT_SECRET_KEY, algorithm=jwtsettings.JWT_ALGORITHM
+def create_access_token(subject: Union[str, Any]) -> dict:
+    expires_delta = datetime.utcnow() + timedelta(
+        minutes=jwtsettings.ACCESS_TOKEN_EXPIRE_MINUTES
     )
-    return encoded_jwt
+
+    to_encode = {"exp": expires_delta, "sub": str(subject)}
+    encoded_jwt = jwt.encode(
+        to_encode, jwtsettings.JWT_SECRET_KEY, jwtsettings.JWT_ALGORITHM
+    )
+    return {"access_token": encoded_jwt, "access_token_expiry": expires_delta}
 
 
-def create_refresh_token(data: dict, expires_delta: int = None) -> str:
-    if expires_delta is not None:
-        expires_delta = datetime.utcnow() + expires_delta
-    else:
-        expires_delta = datetime.utcnow() + timedelta(
-            minutes=jwtsettings.REFRESH_TOKEN_EXPIRE_MINUTES
-        )
+def create_refresh_token(subject: Union[str, Any]) -> dict:
+    expires_delta = datetime.utcnow() + timedelta(
+        minutes=jwtsettings.REFRESH_TOKEN_EXPIRE_MINUTES
+    )
 
-    to_encode = data.copy()
-    to_encode.update({"exp": expires_delta})
+    to_encode = {"exp": expires_delta, "sub": str(subject)}
     encoded_jwt = jwt.encode(
         to_encode, jwtsettings.JWT_REFRESH_SECRET_KEY, jwtsettings.JWT_ALGORITHM
     )
-    return encoded_jwt
+    return {"refresh_token": encoded_jwt, "refresh_token_expiry": expires_delta}
 
 
-def verify_token(token, credentials_exception):
-    try:
-        payload = jwt.decode(
-            token, jwtsettings.JWT_SECRET_KEY, algorithms=[jwtsettings.JWT_ALGORITHM]
-        )
-        email: str = payload.get("sub")
-        if email is None:
-            raise credentials_exception
-        token_data = authentication.TokenData(email=email)
-        return token_data.email
-    except JWTError:
-        raise credentials_exception
+def token_expired(token_expiry):
+    current_time = datetime.utcnow()
+    return token_expiry < current_time

@@ -3,7 +3,7 @@ from schemas import caretaker, booking
 from sqlalchemy.orm import Session
 from database import db, caretaker_service
 from typing import List
-from utils.hashing import Hash
+from utils import oauth2, hashing
 
 router = APIRouter()
 
@@ -17,7 +17,7 @@ def create_caretaker(
         request.name,
         request.address,
         request.email,
-        Hash.get_password_hash(request.password),
+        hashing.get_hashed_password(request.password),
         request.phone,
         request.lat,
         request.lon,

@@ -12,6 +12,7 @@ requests = "*"
 passlib = "*"
 bcrypt = "*"
 python-jose = "*"
+fastapi-jwt-auth = "*"
 
 [dev-packages]
 
