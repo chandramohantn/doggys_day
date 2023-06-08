@@ -1,9 +1,9 @@
 fastapi
 uvicorn
 sqlalchemy
-psycopg2
 requests
 passlib
 bcrypt
 python-jose
 fastapi-jwt-auth
+python-multipart
