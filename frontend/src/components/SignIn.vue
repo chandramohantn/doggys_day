@@ -1,7 +1,7 @@
 <template>
   <div class="page-container">
     <div class="header-container">
-      <h1>Welcome {{ username }}</h1>
+      <h1>Welcome</h1>
     </div>
 
     <div class="content-container">
@@ -11,10 +11,10 @@
           <form class="form-container">
             <h2 class="login-title">Owner Login</h2>
             <div class="input-field">
-              <input type="text" placeholder="Email/Mobile" required v-model="username" />
+              <input type="text" placeholder="Email/Mobile" required v-model="owner_username" />
             </div>
             <div class="input-field">
-              <input type="password" placeholder="Password" required v-model="password" />
+              <input type="password" placeholder="Password" required v-model="owner_password" />
             </div>
             <button class="login-button" type="submit" @click="owner_login">Signin</button>
             <p class="new-user-text">New Owner?</p>
@@ -26,10 +26,10 @@
           <form class="form-container">
             <h2 class="login-title">Caretaker Login</h2>
             <div class="input-field">
-              <input type="text" placeholder="Email/Mobile" required v-model="username" />
+              <input type="text" placeholder="Email/Mobile" required v-model="caretaker_username" />
             </div>
             <div class="input-field">
-              <input type="password" placeholder="Password" required v-model="password" />
+              <input type="password" placeholder="Password" required v-model="caretaker_password" />
             </div>
             <button class="login-button" type="submit" @click="caretaker_login">Signin</button>
             <p class="new-user-text">New Caretaker?</p>
@@ -51,8 +51,10 @@ export default {
   name: 'SignIn',
   data() {
     return {
-      username: '',
-      password: '',
+      owner_username: '',
+      owner_password: '',
+      caretaker_username: '',
+      caretaker_password: '',
       access_token: '',
       refresh_token: '',
       token_type: '',
@@ -69,8 +71,8 @@ export default {
     owner_login() {
       try {
         const formData = {
-          username: this.username,
-          password: this.password,
+          username: this.owner_username,
+          password: this.owner_password,
         };
         axios.post('http://127.0.0.1:8000/api/v1/authentication/owner_signin', formData)
           .then(response => {
@@ -85,17 +87,17 @@ export default {
       catch (error) {
         console.warn('Login failed:', error.response.data);
       }
-      this.username = '';
-      this.password = '';
+      this.owner_username = '';
+      this.owner_password = '';
     },
     owner_signup() {
-      this.$router.push({ name: 'SignUp' });
+      this.$router.push({ name: 'OwnerSignUp' });
     },
     caretaker_login() {
       try {
         const formData = {
-          username: this.username,
-          password: this.password,
+          username: this.caretaker_username,
+          password: this.caretaker_password,
         };
         axios.post('http://127.0.0.1:8000/api/v1/authentication/caretaker_signin', formData)
           .then(response => {
@@ -110,19 +112,12 @@ export default {
       catch (error) {
         console.warn('Login failed:', error.response.data);
       }
-      this.username = '';
-      this.password = '';
+      this.caretaker_username = '';
+      this.caretaker_password = '';
     },
     caretaker_signup() {
-      this.$router.push({ name: 'SignUp' })
+      this.$router.push({ name: 'CaretakerSignUp' })
     },
-    // get_access_token() {
-    //   const token_type = localStorage.getItem('token_type');
-    //   token_type = token_type ? token_type : '';
-    //   const access_token = localStorage.getItem('access_token');
-    //   access_token = access_token ? access_token : '';
-    //   return { 'token_type': token_type, 'access_token': access_token };
-    // },
   },
 };
 </script>

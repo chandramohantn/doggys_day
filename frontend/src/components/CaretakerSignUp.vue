@@ -5,7 +5,7 @@
         </div>
         <div class="content-container">
             <form class="form-container">
-                <h2 class="signup-title">Sign Up</h2>
+                <h2 class="signup-title">Caretaker Sign Up</h2>
                 <div class="input-field">
                     <input type="text" placeholder="Username" v-model="username" required />
                 </div>
@@ -30,16 +30,11 @@
                 <div class="input-field">
                     <input type="text" placeholder="Longitude" v-model="longitude" required />
                 </div>
-                <button class="signup-button" type="submit" @click="submitForm">Submit</button>
+                <!-- <button class="signup-button" type="submit" @click="submitForm">Submit</button> -->
+                <button class="signup-button" type="submit" :disabled="isFormInvalid" @click="submitForm">Submit</button>
             </form>
         </div>
 
-        <div v-if="isLoading" class="loading-overlay">
-            <!-- show loading spinner or message -->
-        </div>
-        <div v-if="errorMessage" class="error-message">
-            {{ errorMessage }}
-        </div>
     </div>
 </template>
   
@@ -48,7 +43,7 @@ import './styles.css';
 import axios from 'axios';
 
 export default {
-    name: 'SignUp',
+    name: 'CaretakerSignUp',
     data() {
         return {
             username: '',
@@ -59,11 +54,42 @@ export default {
             address: '',
             latitude: '',
             longitude: '',
-            isLoading: false,
-            errorMessage: '',
         };
     },
+    computed: {
+        isFormInvalid() {
+            return (
+                !this.username ||
+                !this.password ||
+                !this.confirmPassword ||
+                !this.email ||
+                !this.phoneNumber ||
+                !this.address ||
+                !this.latitude ||
+                !this.longitude ||
+                !this.isEmailValid() ||
+                !this.isPhoneValid() ||
+                !this.checkPassword()
+            );
+        },
+    },
     methods: {
+        isEmailValid() {
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            return emailRegex.test(this.email);
+        },
+        isPhoneValid() {
+            if (this.phoneNumber.length == 10) {
+                return true;
+            }
+            return false;
+        },
+        checkPassword() {
+            if (this.confirmPassword == this.password) {
+                return true;
+            }
+            return false;
+        },
         async submitForm() {
             const formData = {
                 name: this.username,
@@ -76,11 +102,8 @@ export default {
                 lon: this.longitude,
             };
 
-            this.isLoading = true;
-            this.errorMessage = '';
-
             try {
-                axios.post('http://127.0.0.1:8000/api/v1/owner/create', formData)
+                axios.post('http://127.0.0.1:8000/api/v1/caretaker/signup', formData)
                     .then(response => {
                         console.log('Logged in:', response.data);
                         window.alert('Account created successfully !!!');
@@ -92,9 +115,6 @@ export default {
             } catch (error) {
                 console.error('Sign up failed:', error.response.data);
                 this.errorMessage = 'Error occurred while signing up.';
-            }
-            finally {
-                this.isLoading = false;
             }
         },
     },

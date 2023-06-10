@@ -45,11 +45,6 @@ def get_owner_by_phone(db: Session, owner_phone: str):
     return owner_obj
 
 
-def get_all_owners(db: Session):
-    owner_objs = db.query(models.Owner).all()
-    return owner_objs
-
-
 def edit_owner(
     db: Session,
     owner_obj: models.Owner,

@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from database.db import engine
 from models import models
-from routes import authentication, caretakers, owners
+from routes import authentication, caretakers, owners, administrator
 
 
 app = FastAPI()
@@ -18,6 +18,7 @@ app.add_middleware(
 
 models.Base.metadata.create_all(engine)
 
+app.include_router(administrator.router, tags=["admin"], prefix="/api/v1/admin")
 app.include_router(
     authentication.router, tags=["authentication"], prefix="/api/v1/authentication"
 )

@@ -6,10 +6,16 @@
 
         <div class="content-container">
             <h2>All Bookings Info:</h2>
-            <p> {{ receivedData }} </p>
-            <div class="small-container caretaker-item" v-for="item in receivedData" :key="item.id"
-                @click="handleClick(item.id)">
-                <p>{{ item.owner_id }}, {{ item.caretaker_id }}, {{ item.instruction }}, {{ item.date_of_booking }}</p>
+            <!-- <p> {{ receivedData }} </p> -->
+            <div class="inner-container">
+                <div class="small-container caretaker-item" v-for="item in receivedData" :key="item.id"
+                    @click="handleClick(item.id)">
+                    <p>{{ item.id }},</p>
+                    <p>{{ item.owner_id }},</p>
+                    <p>{{ item.caretaker_id }}, </p>
+                    <p>{{ item.instruction }}, </p>
+                    <p>{{ item.date_of_booking }}</p>
+                </div>
             </div>
         </div>
     </div>
@@ -50,7 +56,7 @@ export default {
             };
 
             try {
-                axios.get(`http://127.0.0.1:8000/api/v1/owner/booking/${booking_id}`, formData)
+                axios.get(`http://127.0.0.1:8000/api/v1/owner/booking/${booking_id}`, { params: formData })
                     .then(response => {
                         console.warn('Booking Info:', response.data);
                         this.responseData = response.data;

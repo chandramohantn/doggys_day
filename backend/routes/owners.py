@@ -18,11 +18,11 @@ router = APIRouter()
     "/signup",
     summary="Create an owner",
     status_code=status.HTTP_201_CREATED,
-    response_model=owner.ShowOwnerSchema,
+    response_model=owner.OwnerInfoSchema,
 )
 async def owner_signup(
     request: owner.OwnerSchema, db_session: Session = Depends(db.get_db)
-) -> owner.ShowOwnerSchema:
+) -> owner.OwnerInfoSchema:
     """
         POST api call for owner creation
     Args:
@@ -34,7 +34,7 @@ async def owner_signup(
         HTTPException: If phone number already exists
 
     Returns:
-        owner.ShowOwnerSchema: New owner object
+        owner.OwnerInfoSchema: New owner object
     """
 
     owner_email = request.email
@@ -65,16 +65,23 @@ async def owner_signup(
         request.lat,
         request.lon,
     )
-    return new_owner
+    new_owner_obj = {
+        "name": new_owner.name,
+        "address": new_owner.address,
+        "lat": new_owner.lat,
+        "lon": new_owner.lon,
+    }
+    return owner.OwnerInfoSchema(**new_owner_obj)
 
 
 @router.get("/{owner_id}", status_code=200, response_model=owner.ShowOwnerSchema)
 async def get_owner_by_id(
-    owner_id: str, db_session: Session = Depends(db.get_db)
+    header: Request, owner_id: str, db_session: Session = Depends(db.get_db)
 ) -> owner.ShowOwnerSchema:
     """
         GET api call to get the owner corresponding to the provided owner_id
     Args:
+        header (Request): Request headers
         owner_id (str): ID of the owner
         db_session (Session, optional): database session object
 
@@ -85,41 +92,28 @@ async def get_owner_by_id(
         owner.ShowOwnerSchema: Owner object
     """
 
+    userid = token.authenticate_user(header.headers.get("authorization"))
+    if userid != owner_id:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Invalid owner. Authentication failed !!!",
+        )
     owner_obj = owner_service.get_owner_by_id(db_session, owner_id)
     if not owner_obj:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Owner with owner id: {owner_id} not found !!!",
         )
-    return owner_obj
-
-
-@router.get(
-    "/owners", status_code=200, response_model=Optional[List[owner.ShowOwnerSchema]]
-)
-async def get_all_owners(
-    db_session: Session = Depends(db.get_db),
-) -> Optional[List[owner.ShowOwnerSchema]]:
-    """_summary_
-
-    Args:
-        db_session (Session, optional): database session object
-        get_current_user (_type_, optional): current owner dependency object
-
-    Raises:
-        HTTPException: No owners available
-
-    Returns:
-        List[owner.ShowOwnerSchema]: List of owner objects
-    """
-
-    owner_objs = owner_service.get_all_owners(db_session)
-    if not owner_objs:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="No owners available !!!",
-        )
-    return owner_objs
+    owner_obj_dict = {
+        "id": owner_obj.id,
+        "name": owner_obj.name,
+        "email": owner_obj.email,
+        "phone": owner_obj.phone,
+        "address": owner_obj.address,
+        "lat": owner_obj.lat,
+        "lon": owner_obj.lon,
+    }
+    return owner.ShowOwnerSchema(**owner_obj_dict)
 
 
 @router.put("/{owner_id}", status_code=status.HTTP_202_ACCEPTED)
@@ -133,7 +127,7 @@ async def edit_owner(
     if userid != owner_id:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Invalid owner. Authentication failed !!!",
+            detail="Invalid owner. Authentication failed !!!",
         )
     owner_obj = owner_service.get_owner_by_id(db_session, owner_id)
     if not owner_obj:
@@ -161,7 +155,7 @@ async def delete_owner(
     if userid != owner_id:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Invalid owner. Authentication failed !!!",
+            detail="Invalid owner. Authentication failed !!!",
         )
     owner_obj = owner_service.delete_owner(db_session, owner_id)
     if not owner_obj:
@@ -185,7 +179,7 @@ async def add_pet(
     if userid != request.owner_id:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Invalid owner. Authentication failed !!!",
+            detail="Invalid owner. Authentication failed !!!",
         )
     unique_id = str(uuid.uuid4())
     new_pet = owner_service.create_pet(
@@ -201,7 +195,9 @@ async def add_pet(
 
 
 @router.get(
-    "/pet/{owner_id}", status_code=200, response_model=Optional[List[pet.ShowPetSchema]]
+    "/owner_pet/{owner_id}",
+    status_code=200,
+    response_model=Optional[List[pet.ShowPetSchema]],
 )
 async def get_owner_pets(
     request: Request,
@@ -212,7 +208,7 @@ async def get_owner_pets(
     if userid != owner_id:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Invalid owner. Authentication failed !!!",
+            detail="Invalid owner. Authentication failed !!!",
         )
     owner_obj = owner_service.get_owner_by_id(db_session, owner_id)
     if not owner_obj:
@@ -291,7 +287,7 @@ async def create_booking(
     if userid != request.owner_id:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Invalid owner. Authentication failed !!!",
+            detail="Invalid owner. Authentication failed !!!",
         )
     unique_id = str(uuid.uuid4())
     date_of_booking = datetime.utcnow()
@@ -314,7 +310,7 @@ async def create_booking(
 
 
 @router.get(
-    "/booking/{owner_id}",
+    "/owner_booking/{owner_id}",
     status_code=200,
     response_model=Optional[List[booking.ShowBookingSchema]],
 )
@@ -327,7 +323,7 @@ async def get_owner_bookings(
     if userid != owner_id:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Invalid owner. Authentication failed !!!",
+            detail="Invalid owner. Authentication failed !!!",
         )
     owner_obj = owner_service.get_owner_by_id(db_session, owner_id)
     if not owner_obj:
@@ -341,7 +337,17 @@ async def get_owner_bookings(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Owner with owner id {owner_id} has no bookings ...",
         )
-    return booking_objs
+    owner_bookings = []
+    for booking_obj in booking_objs:
+        value = {
+            "id": booking_obj.id,
+            "caretaker_id": booking_obj.caretaker_id,
+            "owner_id": booking_obj.owner_id,
+            "date_of_booking": booking_obj.date_of_booking,
+            "instruction": booking_obj.instruction,
+        }
+        owner_bookings.append(booking.ShowBookingSchema(**value))
+    return owner_bookings
 
 
 @router.get(
@@ -361,13 +367,21 @@ async def get_booking_info(
     #         status_code=status.HTTP_404_NOT_FOUND,
     #         detail=f"Invalid owner. Authentication failed !!!",
     #     )
+
     booking_obj = owner_service.get_booking_info(db_session, booking_id)
     if not booking_obj:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Booking id {booking_id} not found ...",
         )
-    return booking_obj
+    value = {
+        "id": booking_obj.id,
+        "caretaker_id": booking_obj.caretaker_id,
+        "owner_id": booking_obj.owner_id,
+        "date_of_booking": booking_obj.date_of_booking,
+        "instruction": booking_obj.instruction,
+    }
+    return booking.ShowBookingSchema(**value)
 
 
 @router.post(
@@ -423,7 +437,7 @@ async def recommend_caretaker(
     if userid != owner_id:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Invalid owner. Authentication failed !!!",
+            detail="Invalid owner. Authentication failed !!!",
         )
     owner_obj = owner_service.get_owner_by_id(db_session, owner_id)
     if not owner_obj:

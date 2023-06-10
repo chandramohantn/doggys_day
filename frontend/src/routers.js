@@ -1,6 +1,7 @@
 import HomePage from './components/HomePage.vue'
 import SignIn from './components/SignIn.vue'
-import SignUp from './components/SignUp.vue'
+import OwnerSignUp from './components/OwnerSignUp.vue'
+import CaretakerSignUp from './components/CaretakerSignUp.vue'
 import PetInfo from './components/PetInfo.vue'
 import AddPet from './components/AddPet.vue'
 import FindCaretaker from './components/FindCaretaker.vue'
@@ -22,9 +23,14 @@ const routes = [
         path: '/signin'
     },
     {
-        name: 'SignUp',
-        component: SignUp,
-        path: '/signup'
+        name: 'OwnerSignUp',
+        component: OwnerSignUp,
+        path: '/owner_signup'
+    },
+    {
+        name: 'CaretakerSignUp',
+        component: CaretakerSignUp,
+        path: '/caretaker_signup'
     },
     {
         name: 'PetInfo',

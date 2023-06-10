@@ -18,6 +18,10 @@
                     <p>Find Caretaker</p>
                     <button @click="handleFindCaretaker">Find</button>
                 </div>
+                <div class="small-container card-container">
+                    <p>Your Bookings</p>
+                    <button @click="handleShowBookings">Find</button>
+                </div>
             </div>
         </div>
 
@@ -60,7 +64,7 @@ export default {
                 owner_id: this.userid
             };
             try {
-                axios.get(`http://127.0.0.1:8000/api/v1/owner/pet/${this.userid}`, { params: formData })
+                axios.get(`http://127.0.0.1:8000/api/v1/owner/owner_pet/${this.userid}`, { params: formData })
                     .then(response => {
                         console.log('Pet Info:', response.data);
                         this.$router.push({ name: 'PetInfo', params: { responseData: JSON.stringify(response.data) } })
@@ -89,6 +93,27 @@ export default {
             }
             catch (error) {
                 console.warn('Recommending Careatkers failed:', error.response.data);
+            }
+        },
+        handleShowBookings() {
+            const formData = {
+                owner_id: this.userid
+            };
+
+            try {
+                axios.get(`http://127.0.0.1:8000/api/v1/owner/owner_booking/${this.userid}`, { params: formData })
+                    .then(response => {
+                        console.warn('All Booking Info:', response.data);
+                        this.responseData = response.data;
+                        console.warn(typeof this.responseData);
+                        console.warn(this.responseData);
+                        this.$router.push({ name: 'AllBookingInfo', params: { responseData: JSON.stringify(response.data) } })
+                    })
+                    .catch(error => {
+                        console.warn('Fetching Booking Info Failed:', error.response.data);
+                    });
+            } catch (error) {
+                console.error('Fetching Booking Info Failed:', error.response.data);
             }
         },
     },

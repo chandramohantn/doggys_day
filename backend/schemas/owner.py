@@ -11,6 +11,13 @@ class OwnerSchema(BaseModel):
     lon: int
 
 
+class OwnerInfoSchema(BaseModel):
+    name: str
+    address: str
+    lat: int
+    lon: int
+
+
 class ShowOwnerSchema(BaseModel):
     id: str
     name: str

@@ -85,21 +85,6 @@ async def get_caretaker(
     return caretaker_obj
 
 
-@router.get(
-    "/caretakers", status_code=200, response_model=List[caretaker.ShowCaretakerSchema]
-)
-async def get_all_caretakers(
-    db: Session = Depends(db.get_db),
-) -> List[caretaker.ShowCaretakerSchema]:
-    caretaker_objs = caretaker_service.get_all_caretakers(db)
-    if not caretaker_objs:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"No caretakers available !!!",
-        )
-    return caretaker_objs
-
-
 @router.put("/{caretaker_id}", status_code=status.HTTP_202_ACCEPTED)
 async def edit_caretaker(
     caretaker_id: str,

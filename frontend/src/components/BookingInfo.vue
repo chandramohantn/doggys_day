@@ -50,7 +50,7 @@ export default {
             };
 
             try {
-                axios.get(`http://127.0.0.1:8000/api/v1/owner/booking/${this.userid}`, { params: formData })
+                axios.get(`http://127.0.0.1:8000/api/v1/owner/owner_booking/${this.userid}`, { params: formData })
                     .then(response => {
                         console.warn('All Booking Info:', response.data);
                         this.responseData = response.data;
